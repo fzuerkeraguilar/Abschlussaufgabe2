@@ -1,12 +1,11 @@
-package edu.kit.informatik.io.commands;
+package edu.kit.informatik.data.fields;
 
 import edu.kit.informatik.data.Game;
 import edu.kit.informatik.data.resources.exceptions.GameException;
+import edu.kit.informatik.io.commands.Command;
 
-public class Reset extends Command{
-    public static final String IDENTIFIER = "reset";
-
-    public Reset(String[] args) {
+public class Quit extends Command {
+    public Quit(String[] args) {
         super(args);
     }
 
