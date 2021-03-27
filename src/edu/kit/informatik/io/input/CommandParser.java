@@ -1,9 +1,11 @@
 package edu.kit.informatik.io.input;
 
+import edu.kit.informatik.Terminal;
 import edu.kit.informatik.io.commands.*;
 import edu.kit.informatik.io.resources.exceptions.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,7 +21,7 @@ public class CommandParser {
     private static final String REGEX_SINGLE_PARAMETER = "[^;\\n\\r ]+";
     /** The regular expression of multiple parameters */
     private static final String REGEX_MULTIPLE_PARAMETER
-            = "[^;\\n\\r]+" + "(?:;" + REGEX_SINGLE_PARAMETER + ")*";
+            = "[^;\\n\\r]+" + "(?:," + REGEX_SINGLE_PARAMETER + ")*";
     /** The regular expression of a generic command,
      * containing one capturing group for the command and one for all parameters */
     private static final String REGEX_COMMAND = "(\\S+)(?: (" + REGEX_MULTIPLE_PARAMETER + "))?";
@@ -47,48 +49,58 @@ public class CommandParser {
 
         final String commandName = commandMatcher.group(REGEX_GROUP_COMMAND_INDEX);
 
-        if (commandMatcher.groupCount() < 2 || commandMatcher.group(REGEX_GROUP_COMMAND_PARAMETER_INDEX) == null) {
+        /*if (commandMatcher.groupCount() < 2 || commandMatcher.group(REGEX_GROUP_COMMAND_PARAMETER_INDEX) == null) {
             return interpretCommand(commandName);
-        }
+        }*/
 
         final String parameterString = commandMatcher.group(REGEX_GROUP_COMMAND_PARAMETER_INDEX);
         final List<String> parameters = extractParameters(parameterString);
 
-
+        Terminal.printLine(parameters);
+        Terminal.printLine(parameters.size());
         return interpretCommand(commandName, parameters);
     }
 
-    private static Command interpretCommand(String command) throws CommandNotFoundException {
-        return null;
-        /*switch (command) {
-            case ListNetworks.REGEX:
-                return new ListNetworks();
+    /*private static Command interpretCommand(String command) throws CommandNotFoundException {
+        switch (command) {
+            case Turn.IDENTIFIER:
+                return new Turn();
             default: throw new CommandNotFoundException(command);
-        }*/
-    }
+        }
+    }*/
 
     private static Command interpretCommand(String command, List<String> parameters) throws InputException {
-        return null;
-        /*if (parameters.size() == AddSection.PARAM_COUNT && command.equals(AddSection.REGEX)) {
-            return new AddSection(parameters);
-        }
         switch (command) {
-            case AddNetwork.REGEX:
-                return new AddNetwork(parameters);
-            case Print.REGEX:
-                return new Print(parameters);
-            case Flow.REGEX:
-                return new Flow(parameters);
-            case ListResults.REGEX:
-                return new ListResults(parameters);
+            case Move.IDENTIFIER:
+                return new Move(parameters);
+            case Extinguish.IDENTIFIER:
+                return new Extinguish(parameters);
+            case Refill.IDENTIFIER:
+                return new Refill(parameters);
+            case BuyFireEngine.IDENTIFIER:
+                return new BuyFireEngine(parameters);
+            case FireToRoll.IDENTIFIER:
+                return new FireToRoll(parameters);
+            case Turn.IDENTIFIER:
+                return new Turn(parameters);
+            case Reset.IDENTIFIER:
+                return new Reset(parameters);
+            case ShowBoard.IDENTIFIER:
+                return new ShowBoard(parameters);
+            case ShowField.IDENTIFIER:
+                return new ShowField(parameters);
+            case ShowPlayer.IDENTIFIER:
+                return new ShowPlayer(parameters);
             default: throw new CommandNotFoundException(command);
-        }*/
+        }
     }
 
 
     private static ArrayList<String> extractParameters(final String parameterString) {
+        if(parameterString == null) return new ArrayList<>();
+        return new ArrayList<String>(Arrays.asList(parameterString.split(",")));
 
-        final Pattern singleParam = Pattern.compile(REGEX_SINGLE_PARAMETER);
+        /*final Pattern singleParam = Pattern.compile(REGEX_SINGLE_PARAMETER);
         final Matcher paramMatcher = singleParam.matcher(parameterString);
 
         final ArrayList<String> parameters = new ArrayList<>();
@@ -97,7 +109,7 @@ public class CommandParser {
             parameters.add(paramMatcher.group());
         }
 
-        return parameters;
+        return parameters;*/
     }
 
 }

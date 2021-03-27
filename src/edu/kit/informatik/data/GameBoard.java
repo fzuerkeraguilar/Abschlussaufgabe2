@@ -1,11 +1,9 @@
 package edu.kit.informatik.data;
 
 import edu.kit.informatik.data.fields.Field;
-import edu.kit.informatik.data.playfigures.Figure;
 import edu.kit.informatik.data.playfigures.FireEngine;
 import edu.kit.informatik.data.resources.Coordinates;
-import edu.kit.informatik.data.resources.exceptions.GameBoardSIzeNotOddExceptions;
-import edu.kit.informatik.data.resources.exceptions.ValueOutOfRangeException;
+import edu.kit.informatik.data.resources.exceptions.*;
 import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
 
 import java.util.*;
@@ -27,13 +25,13 @@ public class GameBoard {
         gameBoard = fields;
     }
 
-    public void moveFigure(FireEngine figure, Coordinates destination) throws FalseFormattingException {
-        if(this.findFireEnginePath(figure.position, destination, (int) FireEngine.MAX_MOVEMENT)) {
+    public void moveFigure(FireEngine figure, Coordinates destination) throws FigureDestroyedException, FieldNotReachableException, FieldNotAvailableException {
+        if(this.findFireEnginePath(figure.position, destination, FireEngine.MAX_MOVEMENT)) {
             this.getField(figure.position).removeFigure(figure.identifier);
             this.getField(destination).addFigure(figure);
             figure.move(destination);
         } else {
-            throw new FalseFormattingException("path not found", "");
+            throw new FieldNotReachableException(figure.toString(), destination.toString());
         }
     }
 
@@ -57,21 +55,37 @@ public class GameBoard {
     }
 
 
-    public void extinguishField(Coordinates coordinates) throws FalseFormattingException {
+    public Field extinguishField(Coordinates coordinates) throws FieldNotExtinguishableException {
         if(!gameBoard[coordinates.y][coordinates.x].isExtinguishable()) {
-            throw new FalseFormattingException("not extinguishable", "");
+            throw new FieldNotExtinguishableException(coordinates.toString());
         }
         gameBoard[coordinates.y][coordinates.x] = gameBoard[coordinates.y][coordinates.x].extinguish();
+        return gameBoard[coordinates.y][coordinates.x];
     }
 
-    public void fireToRoll(int roll) throws FalseFormattingException {
+    public boolean containsBurningFields() {
+        boolean burningFieldFound = false;
+
+        for(Field[] fields : gameBoard) {
+            for(Field field : fields) {
+                if(field.burns()) {
+                    burningFieldFound = true;
+                    break;
+                }
+            }
+            if(burningFieldFound) break;
+        }
+
+        return burningFieldFound;
+    }
+
+    public void fireToRoll(int roll) {
         switch (roll) {
             case 1:
                 for(int y = 0; y < DIM.y; y++) {
                     for(int x = 0; x < DIM.x; x++) {
                         if(gameBoard[y][x].isBurnable()) {
-                            this.addAdjFields(gameBoard[y][x].coordinates, 0);
-                            for(Field adjField : gameBoard[y][x].adjFields) {
+                            for(Field adjField : this.getAdjFields(new Coordinates(y,x))) {
                                 if(adjField.burns()) {
                                     gameBoard[y][x] = gameBoard[y][x].burn();
                                     break;
@@ -85,10 +99,8 @@ public class GameBoard {
                 for(int y = 0; y < DIM.y; y++) {
                     for(int x = 0; x < DIM.x; x++) {
                         if(gameBoard[y][x].isBurnable()) {
-                            this.addAdjFields(gameBoard[y][x].coordinates, 0);
-                            if(gameBoard[y][x].adjFields[2].burns()) {
+                            if(this.getAdjFields(new Coordinates(y,x))[2].burns()) {
                                 gameBoard[y][x] = gameBoard[y][x].burn();
-                                break;
                             }
                         }
                     }
@@ -98,10 +110,8 @@ public class GameBoard {
                 for(int y = 0; y < DIM.y; y++) {
                     for(int x = 0; x < DIM.x; x++) {
                         if(gameBoard[y][x].isBurnable()) {
-                            this.addAdjFields(gameBoard[y][x].coordinates, 0);
-                            if(gameBoard[y][x].adjFields[3].burns()) {
+                            if(this.getAdjFields(new Coordinates(y,x))[3].burns()) {
                                 gameBoard[y][x] = gameBoard[y][x].burn();
-                                break;
                             }
                         }
                     }
@@ -111,10 +121,8 @@ public class GameBoard {
                 for(int y = 0; y < DIM.y; y++) {
                     for(int x = 0; x < DIM.x; x++) {
                         if(gameBoard[y][x].isBurnable()) {
-                            this.addAdjFields(gameBoard[y][x].coordinates, 0);
-                            if(gameBoard[y][x].adjFields[0].burns()) {
+                            if(this.getAdjFields(new Coordinates(y,x))[0].burns()) {
                                 gameBoard[y][x] = gameBoard[y][x].burn();
-                                break;
                             }
                         }
                     }
@@ -124,10 +132,8 @@ public class GameBoard {
                 for(int y = 0; y < DIM.y; y++) {
                     for(int x = 0; x < DIM.x; x++) {
                         if(gameBoard[y][x].isBurnable()) {
-                            this.addAdjFields(gameBoard[y][x].coordinates, 0);
-                            if(gameBoard[y][x].adjFields[1].burns()) {
+                            if(this.getAdjFields(new Coordinates(y,x))[1].burns()) {
                                 gameBoard[y][x] = gameBoard[y][x].burn();
-                                break;
                             }
                         }
                     }
@@ -135,11 +141,11 @@ public class GameBoard {
                 break;
             case 6:
                 return;
-            default: throw new FalseFormattingException("number 1-6", "");
+            default:
         }
     }
 
-    void addAdjFields(Coordinates coordinates, int depth) {
+    void addAdjFields(Coordinates coordinates) {
         //TODO depth implementieren
 
         this.getField(coordinates).adjFields[0] = this.getField(coordinates.north(0));
@@ -157,7 +163,7 @@ public class GameBoard {
         return fields;
     }
 
-    void addDiagFields(Coordinates coordinates, int depth) {
+    void addDiagFields(Coordinates coordinates) {
         //TODO depth implementieren
         this.getField(coordinates).adjFields[0] = this.getField(coordinates.northEast(0, DIM.x));
         this.getField(coordinates).adjFields[1] = this.getField(coordinates.southEast(DIM.y, DIM.x));
@@ -165,13 +171,22 @@ public class GameBoard {
         this.getField(coordinates).adjFields[3] = this.getField(coordinates.northWest(0, 0));
     }
 
+    Field[] getDiagFields(Coordinates coordinates) {
+        Field[] fields = new Field[4];
+        fields[0] = this.getField(coordinates.northEast(0, DIM.x));
+        fields[1] = this.getField(coordinates.southEast(DIM.y, DIM.x));
+        fields[2] = this.getField(coordinates.southWest(DIM.y, 0));
+        fields[3] = this.getField(coordinates.northWest(0, 0));
+        return fields;
+    }
+
     void placeFireEngine(FireEngine fireEngine, Coordinates position) {
         gameBoard[position.y][position.x].addFigure(fireEngine);
     }
 
-    private boolean findFireEnginePath(Coordinates start, Coordinates destination, int maxLength) throws FalseFormattingException {
+    private boolean findFireEnginePath(Coordinates start, Coordinates destination, int maxLength) throws FieldNotAvailableException {
         if(!this.getField(destination).isAvailableToFireEngine()) {
-            throw new FalseFormattingException("destination is not available", "");
+            throw new FieldNotAvailableException(destination.toString());
         }
         if(start.equals(destination)) {
             return true;

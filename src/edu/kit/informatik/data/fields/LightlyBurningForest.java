@@ -16,9 +16,14 @@ public class LightlyBurningForest extends Forest {
         StronglyBurningForest stronglyBurningForest = new StronglyBurningForest(coordinates.y, coordinates.x);
         for(FireEngine f : figuresOnField) {
             stronglyBurningForest.addFigure(f);
-            f.setDestroyed();
+            f.destroy();
         }
         return stronglyBurningForest;
+    }
+
+    @Override
+    public String getIdentifier() {
+        return IDENTIFIER;
     }
 
     @Override
@@ -39,6 +44,7 @@ public class LightlyBurningForest extends Forest {
     public String toString() {
         return IDENTIFIER;
     }
+
 
     @Override
     public boolean isAvailableToFireEngine() {

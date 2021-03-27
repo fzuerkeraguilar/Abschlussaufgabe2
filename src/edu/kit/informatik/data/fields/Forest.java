@@ -6,6 +6,7 @@ public abstract class Forest extends Field{
     private static final boolean BURNABLE_OVERRIDE = true;
     private static final boolean PASSABLE_TO_FIRE_ENGINE_OVERRIDE = true;
     private static final boolean AVAILABLE_TO_FIRE_ENGINE_OVERRIDE = true;
+    private static final boolean EXTINGUISHABLE_OVERRIDE = true;
 
     public Forest(int y, int x) {
         super(y, x);
@@ -19,6 +20,11 @@ public abstract class Forest extends Field{
     @Override
     public boolean isBurnable() {
         return BURNABLE_OVERRIDE;
+    }
+
+    @Override
+    public boolean isExtinguishable() {
+        return EXTINGUISHABLE_OVERRIDE;
     }
 
     @Override
@@ -37,6 +43,6 @@ public abstract class Forest extends Field{
                 builder.append(",");
             }
         }
-        return builder.substring(0, builder.length());
+        return builder.substring(0, builder.length() - 1);
     }
 }

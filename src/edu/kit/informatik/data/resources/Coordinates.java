@@ -4,6 +4,7 @@ import edu.kit.informatik.data.resources.exceptions.GameBoardSIzeNotOddException
 import edu.kit.informatik.data.resources.exceptions.ValueOutOfRangeException;
 
 import java.awt.geom.Point2D;
+import java.util.Objects;
 
 public class Coordinates {
     public int x;
@@ -97,11 +98,20 @@ public class Coordinates {
     }
 
     @Override
-    public boolean equals(Object o)  {
-        if(!o.getClass().equals(this.getClass())) {
-            return false;
-        }
-        Coordinates c = (Coordinates) o;
-        return this.y == c.y && this.x == c.x;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Coordinates that = (Coordinates) o;
+        return x == that.x && y == that.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
+
+    @Override
+    public String toString(){
+        return this.y + "," + this.x;
     }
 }

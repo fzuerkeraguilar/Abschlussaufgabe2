@@ -75,8 +75,8 @@ public class Session {
             POND_COORDINATES.add(new Coordinates(size.y - 1, (size.x / 2) ));
             POND_COORDINATES.add(new Coordinates((size.y / 2), 0 ));
             for (Coordinates c : POND_COORDINATES) {
-                if(!fields[c.y][c.x].toString().equals(Pond.IDENTIFIER)) {
-                    throw new FalseFormattingException("pond not at specified pos", "pond");
+                if(!fields[c.y][c.x].getIdentifier().equals(Pond.IDENTIFIER)) {
+                    throw new FalseFormattingException("pond not at specified pos", c.toString());
                 }
             }
 
@@ -87,10 +87,10 @@ public class Session {
             PLAYER_NAME_COORDINATES.add(new Coordinates(0, size.x - 1));
             Player[] players = new Player[PLAYER_NUM];
             for(int i = 0; i < PLAYER_NUM; i++) {
-                if(fields[PLAYER_NAME_COORDINATES.get(i).y][PLAYER_NAME_COORDINATES.get(i).x].toString().equals(PLAYER_IDENTIFIERS[i])) {
+                if(fields[PLAYER_NAME_COORDINATES.get(i).y][PLAYER_NAME_COORDINATES.get(i).x].getIdentifier().equals(PLAYER_IDENTIFIERS[i])) {
                     players[i] = new Player(PLAYER_IDENTIFIERS[i], PLAYER_NAME_COORDINATES.get(i));
                 } else {
-                    throw new FalseFormattingException("Fire station not at specified pos", "test");
+                    throw new FalseFormattingException("Fire station not at specified pos", String.valueOf(i));
                 }
             }
 
@@ -102,10 +102,14 @@ public class Session {
             PLAYER_FIGURE_COORDINATES.add(new Coordinates(1, size.x - 2));
 
             for(int i = 0; i < PLAYER_NUM; i++) {
-                if(fields[PLAYER_FIGURE_COORDINATES.get(i).y][PLAYER_FIGURE_COORDINATES.get(i).x].getFiguresOnField().get(0).toString().matches(players[i].identifier)) {
+                Terminal.printLine(fields[PLAYER_FIGURE_COORDINATES.get(i).y][PLAYER_FIGURE_COORDINATES.get(i).x].getFiguresOnField().get(0).getOwner());
+                Terminal.printLine(players[i].identifier);
+                if(fields[PLAYER_FIGURE_COORDINATES.get(i).y][PLAYER_FIGURE_COORDINATES.get(i).x].getFiguresOnField().get(0).getOwner().matches(players[i].identifier)) {
                     players[i].addFigure(fields[PLAYER_FIGURE_COORDINATES.get(i).y][PLAYER_FIGURE_COORDINATES.get(i).x].getFiguresOnField().get(0));
+                    Terminal.printLine(players[i].toString());
                 }
             }
+
 
             if(!(lightlyBurningFieldFound && stronglyBurningFieldFound)) {
                 throw new FalseFormattingException("burning Field", "dsjiodlsjd");
@@ -131,6 +135,7 @@ public class Session {
                 this.outputHandler.print(nextCommand.execute(game1));
             } catch (InputException | GameException e) {
                 this.outputHandler.printError(e.getMessage());
+                e.printStackTrace();
             }
         }
     }

@@ -1,16 +1,15 @@
 package edu.kit.informatik.data.fields;
 
 
-import edu.kit.informatik.Terminal;
-import edu.kit.informatik.data.playfigures.Figure;
 import edu.kit.informatik.data.playfigures.FireEngine;
 import edu.kit.informatik.data.resources.Coordinates;
-import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
+import edu.kit.informatik.data.resources.exceptions.IdentifierNotFoundException;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public abstract class Field {
-    public static final String IDENTIFIER = null;
+    private static final String REPRESENTATION = "x";
     public final Coordinates coordinates;
     public Field[] adjFields;
     public Field[] diagFields;
@@ -54,26 +53,18 @@ public abstract class Field {
 
     abstract public Field burn();
 
+    abstract public String getIdentifier();
+
     abstract public Field extinguish();
 
-    abstract public String toString();
+    public String toString() {
+        return REPRESENTATION;
+    }
 
     public void addFigure(final FireEngine figure) {
         this.figuresOnField.add(figure);
     }
 
-    public int figureNum() {
-        return figuresOnField.size();
-    }
-
-    public void moveFigure(String identifier, Field destination) {
-        for(FireEngine f : figuresOnField) {
-            if(f.identifier.equals(identifier)) {
-                destination.addFigure(f);
-                this.removeFigure(identifier);
-            }
-        }
-    }
 
     public void removeFigure(String identifier) {
         figuresOnField.removeIf(f -> f.identifier.equals(identifier));
@@ -83,13 +74,13 @@ public abstract class Field {
         return figuresOnField;
     }
 
-    public FireEngine getFigure(String IDENTIFIER) throws FalseFormattingException {
+    public FireEngine getFigure(String IDENTIFIER) throws IdentifierNotFoundException {
         for (FireEngine f : figuresOnField) {
             if(f.identifier.equals(IDENTIFIER)) {
                 return f;
             }
         }
-        throw new FalseFormattingException("IDENTIFIER NOT FOUND", "");
+        throw new IdentifierNotFoundException(IDENTIFIER);
     }
 
     public String showInformation() {
@@ -98,10 +89,14 @@ public abstract class Field {
 
     @Override
     public boolean equals(Object o) {
-        if(!o.getClass().equals(this.getClass())) {
-            return false;
-        }
-        Field f = (Field) o;
-        return this.coordinates.equals(f.coordinates);
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Field field = (Field) o;
+        return coordinates.equals(field.coordinates);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(coordinates);
     }
 }

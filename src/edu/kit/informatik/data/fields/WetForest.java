@@ -20,6 +20,11 @@ public class WetForest extends Forest{
     }
 
     @Override
+    public String getIdentifier() {
+        return IDENTIFIER;
+    }
+
+    @Override
     public Field extinguish() {
         return null;
     }

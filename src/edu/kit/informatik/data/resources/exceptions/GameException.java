@@ -1,7 +1,7 @@
 package edu.kit.informatik.data.resources.exceptions;
 
 public abstract class GameException extends Exception{
-    protected static String message;
+    protected String message;
 
     @Override
     public String getMessage(){

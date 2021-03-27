@@ -2,6 +2,7 @@ package edu.kit.informatik.io.commands;
 
 import edu.kit.informatik.data.Game;
 import edu.kit.informatik.data.resources.exceptions.GameException;
+import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
 
 /**
  * Abstract Command class that provides the execute method and some useful REGEX for subclasses
@@ -26,11 +27,7 @@ public abstract class Command {
      */
     protected static final String REGEX_EDGE = REGEX_NODE_IDENTIFIER  + REGEX_WHOLE_NUMBER + REGEX_NODE_IDENTIFIER;
 
-    protected final String[] arguments;
 
-    public Command(String[] args) {
-        arguments = args;
-    }
 
     /**
      * Executes the command on given database

@@ -18,14 +18,15 @@ public class FireStation extends Field{
     }
 
     @Override
+    public String getIdentifier() {
+        return IDENTIFIER;
+    }
+
+    @Override
     public Field extinguish() {
         return null;
     }
 
-    @Override
-    public String toString() {
-        return this.IDENTIFIER;
-    }
 
     @Override
     public boolean containsWater() {

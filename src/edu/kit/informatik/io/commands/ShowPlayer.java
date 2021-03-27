@@ -6,19 +6,19 @@ import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
 
 import java.util.List;
 
-public class Refill extends Command{
-    public static final String IDENTIFIER = "refill";
-    public static final int PARAMETER_NUM = 1;
-    private final String fireEngineIdentifier;
+public class ShowPlayer extends Command{
+    public static final String IDENTIFIER = "show-player";
+    private static final int PARAMETER_NUM = 0;
     private static final int ID_POS = 0;
+    //private final String playerIdentifier;
 
-    public Refill(List<String> args) throws FalseFormattingException {
+    public ShowPlayer(List<String> args) throws FalseFormattingException {
         if(args.size() != PARAMETER_NUM ) throw new FalseFormattingException("NOT THE RIGHT AMOUNT OF PARAMETERS","");
-        this.fireEngineIdentifier = args.get(ID_POS);
+        //playerIdentifier = args.get(ID_POS);
     }
 
     @Override
     public String execute(Game game) throws GameException {
-        return String.valueOf(game.refill(fireEngineIdentifier));
+        return game.showPlayer();
     }
 }

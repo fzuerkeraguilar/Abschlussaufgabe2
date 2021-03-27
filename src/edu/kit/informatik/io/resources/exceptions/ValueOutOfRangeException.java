@@ -18,6 +18,10 @@ public class ValueOutOfRangeException extends InputException {
         this.message = String.format(VALUE_OUT_OF_EXPECTED_RANGE, value, lowerBound, upperBound);
     }
 
+    public ValueOutOfRangeException(int value, int lowerBound, int upperBound) {
+        this.message = String.format(VALUE_OUT_OF_EXPECTED_RANGE, String.valueOf(value), lowerBound, upperBound);
+    }
+
     /**
      * For use with NumberFormatException, while parsing int
      * @param message Message of NumberFormatException

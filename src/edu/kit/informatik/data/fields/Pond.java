@@ -15,14 +15,15 @@ public class Pond extends Field{
     }
 
     @Override
+    public String getIdentifier() {
+        return IDENTIFIER;
+    }
+
+    @Override
     public Field extinguish() {
         return null;
     }
 
-    @Override
-    public String toString() {
-        return IDENTIFIER;
-    }
 
     @Override
     public boolean containsWater() {

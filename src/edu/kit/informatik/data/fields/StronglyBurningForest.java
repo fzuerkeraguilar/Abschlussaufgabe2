@@ -16,6 +16,11 @@ public class StronglyBurningForest extends Forest{
     }
 
     @Override
+    public String getIdentifier() {
+        return IDENTIFIER;
+    }
+
+    @Override
     public boolean burns() {
         return BURNS_OVERRIDE;
     }

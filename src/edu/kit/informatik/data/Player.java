@@ -1,20 +1,20 @@
 package edu.kit.informatik.data;
 
-import edu.kit.informatik.Application;
-import edu.kit.informatik.data.fields.Field;
-import edu.kit.informatik.data.playfigures.Figure;
 import edu.kit.informatik.data.playfigures.FireEngine;
 import edu.kit.informatik.data.resources.Coordinates;
+import edu.kit.informatik.data.resources.exceptions.IdentifierNotFoundException;
+import edu.kit.informatik.data.resources.exceptions.NotEnoughReputationException;
 import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Player {
     public final String identifier;
     public boolean alive;
     public final Coordinates fireStationPos;
-    private static int reputation;
-    private static final ArrayList<FireEngine> fireEngines = new ArrayList<>();
+    private int reputation;
+    private final ArrayList<FireEngine> fireEngines = new ArrayList<>();
 
 
     public Player(String identifier, Coordinates fireStation) {
@@ -24,22 +24,21 @@ public class Player {
     }
 
     public void addFigure (FireEngine f) {
-        f.setIndex(fireEngines.size());
-        fireEngines.add(f);
+        this.fireEngines.add(f);
     }
 
-    public FireEngine getFireEngine(String Identifier) throws FalseFormattingException {
+    public FireEngine getFireEngine(String Identifier) throws IdentifierNotFoundException {
         for(FireEngine f : fireEngines) {
             if(f.identifier.equals(Identifier)) {
                 return f;
             }
         }
-        throw new FalseFormattingException("identifier not found", "");
+        throw new IdentifierNotFoundException(identifier);
     }
 
-    public FireEngine addFireEngine(int y, int x) throws FalseFormattingException {
+    public FireEngine addFireEngine(int y, int x) throws NotEnoughReputationException {
         if(reputation < 5 ) {
-            throw new FalseFormattingException("not enough reputation", "");
+            throw new NotEnoughReputationException(this.identifier);
         }
         FireEngine newFireEngine = new FireEngine(y, x, identifier + fireEngines.size());
         fireEngines.add(newFireEngine);
@@ -63,7 +62,7 @@ public class Player {
         return builder.substring(0, builder.length() - 1);
     }
 
-    public boolean isAlive() {
+    public boolean checkIfAlive() {
         if(!alive) return false;
         for(FireEngine fireEngine : fireEngines) {
             if (!fireEngine.destroyed) {
@@ -72,5 +71,28 @@ public class Player {
         }
         this.alive = false;
         return false;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Player player = (Player) o;
+        return Objects.equals(identifier, player.identifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(identifier);
+    }
+
+    public int getReputation() {
+        return reputation;
+    }
+
+    public void endTurn() {
+        for(FireEngine f: fireEngines) {
+            f.newMove();
+        }
     }
 }

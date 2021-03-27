@@ -19,6 +19,11 @@ public class DryForest extends Forest {
     }
 
     @Override
+    public String getIdentifier() {
+        return IDENTIFIER;
+    }
+
+    @Override
     public Field extinguish() {
         return new WetForest(coordinates.y, coordinates.x);
     }
