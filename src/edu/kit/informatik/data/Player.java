@@ -4,40 +4,78 @@ import edu.kit.informatik.data.playfigures.FireEngine;
 import edu.kit.informatik.data.resources.Coordinates;
 import edu.kit.informatik.data.resources.exceptions.IdentifierNotFoundException;
 import edu.kit.informatik.data.resources.exceptions.NotEnoughReputationException;
-import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
+/**
+ *
+ * @author Fabian Manuel Zürker Aguilar
+ * @version 1.0
+ */
 public class Player {
+    /**
+     *
+     */
+    public static final int EXTINGUISH_REP_GAIN = 1;
+    /**
+     *
+     */
     public final String identifier;
+    /**
+     *
+     */
     public boolean alive;
+    /**
+     *
+     */
     public final Coordinates fireStationPos;
     private int reputation;
     private final ArrayList<FireEngine> fireEngines = new ArrayList<>();
 
-
+    /**
+     *
+     * @param identifier
+     * @param fireStation
+     */
     public Player(String identifier, Coordinates fireStation) {
         this.identifier = identifier;
         this.fireStationPos = fireStation;
         alive = true;
     }
 
-    public void addFigure (FireEngine f) {
+    /**
+     *
+     * @param f
+     */
+    public void addFigure(FireEngine f) {
         this.fireEngines.add(f);
     }
 
-    public FireEngine getFireEngine(String Identifier) throws IdentifierNotFoundException {
-        for(FireEngine f : fireEngines) {
-            if(f.identifier.equals(Identifier)) {
+    /**
+     *
+     * @param identifier
+     * @return
+     * @throws IdentifierNotFoundException
+     */
+    public FireEngine getFireEngine(String identifier) throws IdentifierNotFoundException {
+        for (FireEngine f : fireEngines) {
+            if (f.identifier.equals(identifier)) {
                 return f;
             }
         }
-        throw new IdentifierNotFoundException(identifier);
+        throw new IdentifierNotFoundException(this.identifier);
     }
 
+    /**
+     *
+     * @param y
+     * @param x
+     * @return
+     * @throws NotEnoughReputationException
+     */
     public FireEngine addFireEngine(int y, int x) throws NotEnoughReputationException {
-        if(reputation < 5 ) {
+        if (reputation < 5 ) {
             throw new NotEnoughReputationException(this.identifier);
         }
         FireEngine newFireEngine = new FireEngine(y, x, identifier + fireEngines.size());
@@ -53,8 +91,8 @@ public class Player {
         builder.append(",");
         builder.append(reputation);
         builder.append(System.lineSeparator());
-        for(FireEngine f: fireEngines) {
-            if(!f.destroyed) {
+        for (FireEngine f: fireEngines) {
+            if (!f.destroyed) {
                 builder.append(f.showInformation());
                 builder.append(System.lineSeparator());
             }
@@ -62,9 +100,13 @@ public class Player {
         return builder.substring(0, builder.length() - 1);
     }
 
+    /**
+     *
+     * @return
+     */
     public boolean checkIfAlive() {
-        if(!alive) return false;
-        for(FireEngine fireEngine : fireEngines) {
+        if (!alive) return false;
+        for (FireEngine fireEngine : fireEngines) {
             if (!fireEngine.destroyed) {
                 return true;
             }
@@ -86,13 +128,28 @@ public class Player {
         return Objects.hash(identifier);
     }
 
+    /**
+     *
+     * @return
+     */
     public int getReputation() {
         return reputation;
     }
 
+    /**
+     *
+     */
     public void endTurn() {
-        for(FireEngine f: fireEngines) {
+        for (FireEngine f: fireEngines) {
             f.newMove();
         }
+    }
+
+    /**
+     *
+     * @param gain
+     */
+    public void gainRep(int gain) {
+        this.reputation += gain;
     }
 }

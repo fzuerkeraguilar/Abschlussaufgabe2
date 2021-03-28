@@ -1,14 +1,30 @@
 package edu.kit.informatik.data.fields;
 
-public class FireStation extends Field{
+/**
+ *
+ * @author Fabian Manuel Zürker Aguilar
+ * @version 1.0
+ */
+public class FireStation extends Field {
+    /**
+     *
+     */
     public static final String IDENTIFIER_REGEX = "[A-D]";
-    public static final double FIRE_ENGINE_SPAWNING_RADIUS = Math.cbrt(2);
-    public final String IDENTIFIER;
     private static final boolean CONTAINS_WATER_OVERRIDE = true;
+    /**
+     *
+     */
+    public final String identifier;
 
+    /**
+     *
+     * @param y
+     * @param x
+     * @param identifier
+     */
     public FireStation(int y, int x, String identifier) {
-        super(y,x);
-        this.IDENTIFIER = identifier;
+        super(y, x);
+        this.identifier = identifier;
     }
 
 
@@ -19,7 +35,7 @@ public class FireStation extends Field{
 
     @Override
     public String getIdentifier() {
-        return IDENTIFIER;
+        return identifier;
     }
 
     @Override

@@ -1,152 +1,253 @@
 package edu.kit.informatik.data;
 
-import edu.kit.informatik.Terminal;
 import edu.kit.informatik.data.fields.Field;
 import edu.kit.informatik.data.playfigures.FireEngine;
 import edu.kit.informatik.data.resources.Coordinates;
 import edu.kit.informatik.data.resources.exceptions.*;
-import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
+/**
+ * Game class to model a game FireBreaker
+ * @author Fabian Manuel Zürker Aguilar
+ * @version 1.0
+ */
 public class Game {
-    private final GameBoard board;
-    private final ArrayList<Player> PLAYER_LIST = new ArrayList<>();
-    private boolean lastPlayerTurn = false;
-    private static final String STARTING_PLAYER = "A";
-    private Player currentPlayer;
     private static Coordinates fieldSizeBackup;
     private static Field[][] fieldsBackup;
     private static Player[] playersBackup;
+    private GameBoard gameBoard;
+    private ArrayList<Player> players = new ArrayList<>();
+    private boolean gameLost = false;
+    private boolean gameWon = false;
+    private boolean firstPlayerTurn = false;
+    private Player currentPlayer;
 
 
-    public Game(Coordinates fieldSize, Field[][] fields, Player[] players) throws ValueOutOfRangeException, GameBoardSIzeNotOddExceptions, IdentifierNotFoundException {
+    /**
+     * Constructor of a game of FireBreaker
+     * @param fieldSize size of wanted game board
+     * @param fields Fields that represent the game board; a Field[] of fields represents a horizontal line
+     * @param players Players, that already have their FireEngines assigned in their starting order
+     * @throws ValueOutOfRangeException - if fields does not have the dimensions given in fieldSize
+     * @throws GameBoardSizeNotOddExceptions - if game board size not odd
+     */
+    public Game(Coordinates fieldSize, Field[][] fields, Player[] players) throws ValueOutOfRangeException,
+            GameBoardSizeNotOddExceptions {
         fieldSizeBackup = fieldSize;
         fieldsBackup = fields;
         playersBackup = players;
-        this.board = new GameBoard(fieldSize, fields);
-        Collections.addAll(this.PLAYER_LIST, players);
+        this.gameBoard = new GameBoard(fieldSize, fields);
+        Collections.addAll(this.players, players);
         this.currentPlayer = this.getFirstPlayer();
     }
 
     @Override
     public String toString() {
-        return this.board.toString();
+        return this.gameBoard.toString();
     }
 
-    //Coordinates zero indexed
-    public String showField(Coordinates coordinates) throws IdentifierNotFoundException {
-        if(coordinates.y > this.board.DIM.y || coordinates.x > this.board.DIM.x) {
-            throw new IdentifierNotFoundException(coordinates.toString());
+    /**
+     * Returns a detailed representation of a field with all its fire engines
+     * @param coordinates - zero indexed coordinates of field on game board
+     * @return representation of a field with all its fire engines
+     * @throws CoordinatesNotFoundException - if coordinates are not found
+     */
+    public String showField(Coordinates coordinates) throws CoordinatesNotFoundException, IdentifierNotFoundException {
+        if (coordinates.y > this.gameBoard.dimensions.y || coordinates.x > this.gameBoard.dimensions.x) {
+            throw new CoordinatesNotFoundException(coordinates);
         }
-        return this.board.getField(coordinates).showInformation();
+        return this.gameBoard.getField(coordinates).showInformation();
     }
 
-    //Coordinates zero indexed
-    public void move(String identifier, Coordinates destination) throws FigureDestroyedException, IdentifierNotFoundException, OtherPlayersTurnException, FigureNotMovableException, FieldNotReachableException, FieldNotAvailableException, WrongCommandSequenceException {
-        if(this.lastPlayerTurn) throw new WrongCommandSequenceException();
-        /*Pattern fireEnginePattern = Pattern.compile(FireEngine.REGEX);
-        Matcher fireEngineMatcher = fireEnginePattern.matcher(identifier);
-        String playerID = fireEngineMatcher.group(1);
-        if (!currentPlayer.equals(this.getPlayer(playerID)))  {
-            throw new OtherPlayersTurnException(currentPlayer.identifier);
-        }*/
+    /**
+     * moves fire engine to specified destination
+     * @param identifier identifier of fire engine to be moved
+     * @param destination zero indexed coordinates of destination field
+     * @throws FigureDestroyedException - if given fire engine is already destroyed
+     * @throws IdentifierNotFoundException - if given fire engine does not belong to current player
+     * @throws FigureNotMovableException - if fire engine cannot move during the remainder of this turn
+     * @throws FieldNotReachableException - if destination is not reachable for fire engine
+     * @throws FieldNotAvailableException - if destination is not available for fire engine
+     * @throws WrongCommandSequenceException - if fire-to-roll needs to be executed first
+     */
+    public void move(String identifier, Coordinates destination) throws FigureDestroyedException,
+            IdentifierNotFoundException,
+            FigureNotMovableException,
+            FieldNotReachableException,
+            FieldNotAvailableException,
+            WrongCommandSequenceException, CoordinatesNotFoundException, GameWonException, GameLostException {
+        if (this.gameWon) throw new GameWonException();
+        if (this.gameLost) throw new GameLostException();
+        if (this.firstPlayerTurn) throw new WrongCommandSequenceException();
+        if (destination.y > this.gameBoard.dimensions.y || destination.x > this.gameBoard.dimensions.x) {
+            throw new IdentifierNotFoundException(destination.toString());
+        }
 
         FireEngine movingFigure = this.currentPlayer.getFireEngine(identifier);
-        if(movingFigure.destroyed) {
+        if (movingFigure.destroyed) {
             throw new FigureDestroyedException(identifier);
         }
-        if(!movingFigure.isMovable()) {
+        if (!movingFigure.isMovable()) {
             throw new FigureNotMovableException(identifier);
         }
-        this.board.moveFigure(movingFigure, destination);
+        this.gameBoard.moveFireEngine(movingFigure, destination);
     }
 
-    public String[] extinguish(String identifier, Coordinates coordinates) throws  FigureDestroyedException, FieldNotExtinguishableException, IdentifierNotFoundException, NotEnoughActionPointsExceptions, NotEnoughWaterException, OtherPlayersTurnException, WrongCommandSequenceException, FieldNotReachableException {
-        if(this.lastPlayerTurn) throw new WrongCommandSequenceException();
+    /**
+     * Extinguishes a given field with a given fire engine
+     * @param identifier identifier of fire engine
+     * @param coordinates zero indexed coordinates of field to be extinguished
+     * @return [<new state of field>, <water remaining in given fire engine>]; if game is won, both values are null;
+     * @throws FigureDestroyedException - if given fire engine is already destroyed
+     * @throws FieldNotExtinguishableException - if given field is not extinguishable
+     * @throws IdentifierNotFoundException - if given fire engine does not belong to current player
+     * @throws NotEnoughActionPointsExceptions - if given fire engine does not have enough action points
+     * @throws NotEnoughWaterException - if given fire engine does not contain enough water
+     * @throws FieldNotReachableException - if field ist not reachable from position of given fire engine
+     * @throws CoordinatesNotFoundException - if coordinates are not within game board
+     * @throws WrongCommandSequenceException - if fire-to-roll needs to be executed first
+     * @throws GameWonException - if this game is already won
+     * @throws GameLostException - if this game is already lost
+     */
+    public String[] extinguish(String identifier, Coordinates coordinates) throws FigureDestroyedException,
+            FieldNotExtinguishableException, IdentifierNotFoundException,
+            NotEnoughActionPointsExceptions, NotEnoughWaterException, WrongCommandSequenceException,
+            FieldNotReachableException, CoordinatesNotFoundException, GameWonException, GameLostException {
+        if (this.gameWon) throw new GameWonException();
+        if (this.gameLost) throw new GameLostException();
+        if (this.firstPlayerTurn) throw new WrongCommandSequenceException();
+        if (coordinates.y > this.gameBoard.dimensions.y || coordinates.x > this.gameBoard.dimensions.x) {
+            throw new IdentifierNotFoundException(coordinates.toString());
+        }
 
         String[] output = new String[2];
 
         FireEngine fireEngine = this.currentPlayer.getFireEngine(identifier);
-        if(fireEngine.destroyed) {
+        if (fireEngine.destroyed) {
             throw new FigureDestroyedException(this.currentPlayer.identifier);
         }
-        if(!this.board.getField(coordinates).isExtinguishable()) {
-            throw new FieldNotExtinguishableException(this.board.getField(coordinates).toString());
+        if (!this.gameBoard.getField(coordinates).isExtinguishable()) {
+            throw new FieldNotExtinguishableException(this.gameBoard.getField(coordinates).toString());
         }
         boolean distanceCheck = false;
-        for(Field f : this.board.getAdjFields(coordinates)) {
-            Terminal.printLine(f.toString());
-            for(FireEngine fe : f.getFiguresOnField()) {
-                Terminal.printLine(fe.toString());
-                if(fe.equals(fireEngine)) {
+        for (Field f : this.gameBoard.getAdjFields(coordinates)) {
+            for (FireEngine fe : f.getFireEngineList()) {
+                if (fe.equals(fireEngine)) {
                     distanceCheck = true;
                     break;
                 }
             }
         }
 
-        if(!distanceCheck) throw new FieldNotReachableException(coordinates.toString(), fireEngine.toString());
+        if (!distanceCheck) throw new FieldNotReachableException(coordinates.toString(), fireEngine.toString());
 
-        output[0] = this.board.extinguishField(coordinates).toString();
+        this.currentPlayer.gainRep(Player.EXTINGUISH_REP_GAIN);
+
+        output[0] = this.gameBoard.extinguishField(coordinates).getIdentifier();
         output[1] = String.valueOf(fireEngine.extinguish());
 
-        if(this.board.containsBurningFields()) {
+        if (this.gameBoard.containsBurningFields()) {
             return output;
         }
+        this.gameWon = true;
         output[0] = null;
         output[1] = null;
         return output;
-     }
+    }
 
-    public Player[] fireToRoll(int roll) throws WrongCommandSequenceException {
-        if(!this.lastPlayerTurn) throw new WrongCommandSequenceException();
-        boolean playerAlive = false;
-        Player[] lostPlayers = new Player[this.PLAYER_LIST.size()];
-        this.board.fireToRoll(roll);
-        for(Player p : this.PLAYER_LIST) {
-            if(p.alive){
+    /**
+     * Spread the fire on the game board according to a given dice roll
+     * @param roll dice roll, which determines the direction of spreading
+     * @return Array of all lost players
+     * @throws WrongCommandSequenceException - if fire-to-roll needs to be executed first
+     * @throws GameWonException - if this game is already won
+     * @throws GameLostException - if this game is already lost
+     */
+    public Player[] fireToRoll(int roll) throws WrongCommandSequenceException,
+            CoordinatesNotFoundException,
+            GameWonException,
+            GameLostException {
+        if (this.gameWon) throw new GameWonException();
+        if (this.gameLost) throw new GameLostException();
+        if (!this.firstPlayerTurn) throw new WrongCommandSequenceException();
+        boolean playerStillAlive = false;
+        Player[] lostPlayers = new Player[this.players.size()];
+        this.gameBoard.fireToRoll(roll);
+
+        this.firstPlayerTurn = false;
+
+        for (Player p : this.players) {
+            if (p.alive) {
                 if (p.checkIfAlive()) {
-                    playerAlive = true;
+                    playerStillAlive = true;
                 } else {
-                    lostPlayers[this.PLAYER_LIST.indexOf(p)] = p;
+                    lostPlayers[this.players.indexOf(p)] = p;
                 }
             }
         }
-        if(playerAlive) return lostPlayers;
+        if (playerStillAlive) return lostPlayers;
+        this.gameLost = true;
         return null;
     }
 
-    public String turn() throws WrongCommandSequenceException {
-        if(this.lastPlayerTurn) throw new WrongCommandSequenceException();
+    /**
+     * Ends the current players turn
+     * @return the identifier of the the next player
+     * @throws WrongCommandSequenceException - if fire-to-roll needs to be executed first
+     * @throws GameWonException - if this game is already won
+     * @throws GameLostException - if this game is already lost
+     */
+    public String turn() throws WrongCommandSequenceException, GameWonException, GameLostException {
+        if (this.gameWon) throw new GameWonException();
+        if (this.gameLost) throw new GameLostException();
+        if (this.firstPlayerTurn) throw new WrongCommandSequenceException();
+
         this.currentPlayer.endTurn();
-        if(this.currentPlayer.equals(this.getLastPlayer())) {
-            this.lastPlayerTurn = true;
+
+        if (this.currentPlayer.equals(this.getLastPlayer())) {
+            this.firstPlayerTurn = true;
+            players.add(players.remove(0));
+            this.currentPlayer = this.getFirstPlayer();
+        } else {
+            this.currentPlayer = this.getNextPlayer();
         }
-        //PLAYER_LIST.add(PLAYER_LIST.remove(0));
-        this.currentPlayer = this.getNextPlayer();
+
         return this.currentPlayer.identifier;
     }
 
+    /**
+     *
+     * @param identifier
+     * @return
+     * @throws NotEnoughActionPointsExceptions
+     * @throws FigureAlreadyFilledUpException
+     * @throws FigureDestroyedException
+     * @throws IdentifierNotFoundException
+     * @throws WaterNotAvailableException
+     * @throws WrongCommandSequenceException
+     * @throws CoordinatesNotFoundException
+     */
     public int refill(String identifier) throws
             NotEnoughActionPointsExceptions,
             FigureAlreadyFilledUpException,
-            FigureDestroyedException, IdentifierNotFoundException, WaterNotAvailableException, WrongCommandSequenceException {
-        if(this.lastPlayerTurn) throw new WrongCommandSequenceException();
+            FigureDestroyedException,
+            IdentifierNotFoundException,
+            WaterNotAvailableException, WrongCommandSequenceException, CoordinatesNotFoundException {
+        if (this.firstPlayerTurn) throw new WrongCommandSequenceException();
 
         FireEngine toRefill = this.currentPlayer.getFireEngine(identifier);
-        //board.addAdjFields(toRefill.position);
-        //board.addDiagFields(toRefill.position);
-        for(Field field : this.board.getAdjFields(toRefill.position)) {
-            if(field.containsWater()) {
+
+        for (Field field : this.gameBoard.getAdjFields(toRefill.position)) {
+            if (field.containsWater()) {
                 toRefill.refill();
                 return toRefill.getActionPoints();
             }
         }
 
-        for(Field field : this.board.getDiagFields(toRefill.position)) {
-            if(field.containsWater()) {
+        for (Field field : this.gameBoard.getDiagFields(toRefill.position)) {
+            if (field.containsWater()) {
                 toRefill.refill();
                 return toRefill.getActionPoints();
             }
@@ -154,56 +255,90 @@ public class Game {
         throw new WaterNotAvailableException();
     }
 
-    public int buyFireEngine(Coordinates position) throws FieldNotAvailableException, FieldToDistantException, NotEnoughReputationException, WrongCommandSequenceException {
-        if(this.lastPlayerTurn) throw new WrongCommandSequenceException();
-        if(!this.board.getField(position).isAvailableToFireEngine()) {
-            throw new FieldNotAvailableException(this.board.getField(position).toString());
+    /**
+     *
+     * @param position
+     * @return
+     * @throws FieldNotAvailableException
+     * @throws FieldToDistantException
+     * @throws NotEnoughReputationException
+     * @throws WrongCommandSequenceException
+     * @throws IdentifierNotFoundException
+     * @throws CoordinatesNotFoundException
+     */
+    public int buyFireEngine(Coordinates position) throws FieldNotAvailableException,
+            FieldToDistantException,
+            NotEnoughReputationException,
+            WrongCommandSequenceException,
+            IdentifierNotFoundException,
+            CoordinatesNotFoundException,
+            GameWonException, GameLostException {
+        if (this.gameWon) throw new GameWonException();
+        if (this.gameLost) throw new GameLostException();
+        if (this.firstPlayerTurn) throw new WrongCommandSequenceException();
+        if (position.y > this.gameBoard.dimensions.y || position.x > this.gameBoard.dimensions.x) {
+            throw new IdentifierNotFoundException(position.toString());
+        }
+
+        if (!this.gameBoard.getField(position).isAvailableToFireEngine()) {
+            throw new FieldNotAvailableException(this.gameBoard.getField(position).toString());
         }
         boolean adjFieldFound = false;
-        for(Field f : this.board.getAdjFields(this.currentPlayer.fireStationPos)) {
-            if(f.equals(this.board.getField(position))) {
+        for (Field f : this.gameBoard.getAdjFields(this.currentPlayer.fireStationPos)) {
+            if (f.equals(this.gameBoard.getField(position))) {
                 adjFieldFound = true;
                 break;
             }
         }
-        if(!adjFieldFound) {
-            for(Field f : this.board.getDiagFields(this.currentPlayer.fireStationPos)) {
-                if(f.equals(this.board.getField(position))) {
+        if (!adjFieldFound) {
+            for (Field f : this.gameBoard.getDiagFields(this.currentPlayer.fireStationPos)) {
+                if (f.equals(this.gameBoard.getField(position))) {
                     adjFieldFound = true;
                     break;
                 }
             }
         }
-        if(!adjFieldFound) {
+        if (!adjFieldFound) {
             throw new FieldToDistantException(position.toString());
         }
         FireEngine newFireEngine = this.currentPlayer.addFireEngine(position.y, position.x);
-        this.board.placeFireEngine(newFireEngine, position);
+        this.gameBoard.placeFireEngine(newFireEngine, position);
         return this.currentPlayer.getReputation();
     }
 
-    public Game reset() throws ValueOutOfRangeException, GameBoardSIzeNotOddExceptions, IdentifierNotFoundException {
-        return new Game(fieldSizeBackup, fieldsBackup, playersBackup);
+    /**
+     *
+     * @return
+     * @throws ValueOutOfRangeException
+     * @throws GameBoardSizeNotOddExceptions
+     * @throws IdentifierNotFoundException
+     */
+    public void reset() throws ValueOutOfRangeException, GameBoardSizeNotOddExceptions, IdentifierNotFoundException {
+        Game newGame =  new Game(fieldSizeBackup, fieldsBackup, playersBackup);
+        this.gameLost = false;
+        this.gameBoard = newGame.gameBoard;
+        this.players = newGame.players;
+        this.currentPlayer = this.getFirstPlayer();
     }
 
-    public String showPlayer() throws IdentifierNotFoundException {
+    /**
+     *
+     * @return
+     * @throws IdentifierNotFoundException
+     * @throws GameLostException - if this game is lost
+     */
+    public String showPlayer() throws GameLostException {
+        if (this.gameLost) throw new GameLostException();
         return this.currentPlayer.toString();
     }
 
-    //TODO aufräumen
-    private Player getPlayer(String identifier) throws IdentifierNotFoundException {
-        for(Player p : this.PLAYER_LIST) {
-            if(p.identifier.equals(identifier)) return p;
-        }
-        throw new IdentifierNotFoundException(identifier);
-    }
 
     private Player getNextPlayer() {
-        for(int i = 0; i < this.PLAYER_LIST.size(); i++) {
-            if(currentPlayer.equals(this.PLAYER_LIST.get(i))) {
-                for(int j = this.PLAYER_LIST.indexOf(currentPlayer) + 1; j < PLAYER_LIST.size(); j++) {
-                    if(this.PLAYER_LIST.get(j).alive) {
-                        return this.PLAYER_LIST.get(j);
+        for (int i = 0; i < this.players.size(); i++) {
+            if (currentPlayer.equals(this.players.get(i))) {
+                for (int j = this.players.indexOf(currentPlayer) + 1; j < players.size(); j++) {
+                    if (this.players.get(j).alive) {
+                        return this.players.get(j);
                     }
                 }
             }
@@ -212,21 +347,21 @@ public class Game {
     }
 
     private Player getFirstPlayer() {
-        for(Player p : this.PLAYER_LIST) {
-            if(p.alive) {
+        for (Player p : this.players) {
+            if (p.alive) {
                 return p;
             }
         }
-        return this.PLAYER_LIST.get(0);
+        return this.players.get(0);
     }
 
     private Player getLastPlayer() {
-        for(int i = this.PLAYER_LIST.size() - 1; i > 0; i--){
-            if(this.PLAYER_LIST.get(i).alive) {
-                return this.PLAYER_LIST.get(i);
+        for (int i = this.players.size() - 1; i > 0; i--) {
+            if (this.players.get(i).alive) {
+                return this.players.get(i);
             }
         }
-        return this.PLAYER_LIST.get(this.PLAYER_LIST.size() - 1);
+        return this.players.get(this.players.size() - 1);
     }
 
 }

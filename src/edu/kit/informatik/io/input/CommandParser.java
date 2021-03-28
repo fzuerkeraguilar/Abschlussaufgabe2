@@ -1,6 +1,5 @@
 package edu.kit.informatik.io.input;
 
-import edu.kit.informatik.Terminal;
 import edu.kit.informatik.io.commands.*;
 import edu.kit.informatik.io.resources.exceptions.*;
 
@@ -56,8 +55,8 @@ public class CommandParser {
         final String parameterString = commandMatcher.group(REGEX_GROUP_COMMAND_PARAMETER_INDEX);
         final List<String> parameters = extractParameters(parameterString);
 
-        Terminal.printLine(parameters);
-        Terminal.printLine(parameters.size());
+        //Terminal.printLine(parameters);
+        //Terminal.printLine(parameters.size());
         return interpretCommand(commandName, parameters);
     }
 
@@ -91,13 +90,15 @@ public class CommandParser {
                 return new ShowField(parameters);
             case ShowPlayer.IDENTIFIER:
                 return new ShowPlayer(parameters);
+            case Quit.IDENTIFIER:
+                return new Quit();
             default: throw new CommandNotFoundException(command);
         }
     }
 
 
     private static ArrayList<String> extractParameters(final String parameterString) {
-        if(parameterString == null) return new ArrayList<>();
+        if (parameterString == null) return new ArrayList<>();
         return new ArrayList<String>(Arrays.asList(parameterString.split(",")));
 
         /*final Pattern singleParam = Pattern.compile(REGEX_SINGLE_PARAMETER);

@@ -1,6 +1,11 @@
 package edu.kit.informatik.data.resources.exceptions;
 
-public class ValueOutOfRangeException extends GameException{
+/**
+ *
+ * @author Fabian Manuel Zürker Aguilar
+ * @version 1.0
+ */
+public class ValueOutOfRangeException extends GameException {
     private static final String VALUE_OUT_OF_EXPECTED_RANGE = "expected value between %1$d and %2$d";
 
     /**
@@ -12,6 +17,10 @@ public class ValueOutOfRangeException extends GameException{
         message = String.format(VALUE_OUT_OF_EXPECTED_RANGE, lowerBound, upperBound);
     }
 
+    /**
+     *
+     * @param msg
+     */
     public ValueOutOfRangeException(String msg) {
         message = msg;
     }
