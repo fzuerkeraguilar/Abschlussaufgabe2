@@ -3,22 +3,21 @@ package edu.kit.informatik.data.fields;
 import edu.kit.informatik.data.playfigures.FireEngine;
 
 /**
- *
+ * Class to model a wet forest
  * @author Fabian Manuel Zürker Aguilar
  * @version 1.0
  */
 public class WetForest extends Forest {
     /**
-     *
+     * identifier of this field type
      */
     public static final String IDENTIFIER = "w";
     private static final boolean EXTINGUISHABLE_OVERRIDE = false;
-    private static final String REPRESENTATION = "x";
 
     /**
-     *
-     * @param y
-     * @param x
+     * Constructor of a wet forest
+     * @param y y coordinate of this field
+     * @param x x coordinate of this field
      */
     public WetForest(int y, int x) {
         super(y, x);
@@ -49,6 +48,9 @@ public class WetForest extends Forest {
         return EXTINGUISHABLE_OVERRIDE;
     }
 
-
+    @Override
+    public WetForest clone() {
+        return new WetForest(this.coordinates.y, this.coordinates.x);
+    }
 
 }

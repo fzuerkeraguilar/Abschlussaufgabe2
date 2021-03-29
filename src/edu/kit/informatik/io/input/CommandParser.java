@@ -1,5 +1,6 @@
 package edu.kit.informatik.io.input;
 
+import edu.kit.informatik.data.resources.exceptions.ValueOutOfRangeException;
 import edu.kit.informatik.io.commands.*;
 import edu.kit.informatik.io.resources.exceptions.*;
 
@@ -26,6 +27,8 @@ public class CommandParser {
     private static final String REGEX_COMMAND = "(\\S+)(?: (" + REGEX_MULTIPLE_PARAMETER + "))?";
     private static final int REGEX_GROUP_COMMAND_INDEX = 1;
     private static final int REGEX_GROUP_COMMAND_PARAMETER_INDEX = 2;
+    private static final String LIST_REGEX = "([a-zA-Z0-9]+,)*([a-zA-Z0-9]+)";
+    private static final String LIST_DIVIDER = ",";
 
     /**
      * Constructs a new command parser.
@@ -38,7 +41,7 @@ public class CommandParser {
      * @return Command object that corresponds with the given command
      * @throws InputException if problem is detected during the construction of the Command object
      */
-    public Command parse(final String input) throws InputException {
+    public Command parse(final String input) throws InputException, ValueOutOfRangeException {
         final Pattern commandPattern = Pattern.compile(REGEX_COMMAND);
         final Matcher commandMatcher = commandPattern.matcher(input);
 
@@ -48,27 +51,17 @@ public class CommandParser {
 
         final String commandName = commandMatcher.group(REGEX_GROUP_COMMAND_INDEX);
 
-        /*if (commandMatcher.groupCount() < 2 || commandMatcher.group(REGEX_GROUP_COMMAND_PARAMETER_INDEX) == null) {
-            return interpretCommand(commandName);
-        }*/
 
         final String parameterString = commandMatcher.group(REGEX_GROUP_COMMAND_PARAMETER_INDEX);
         final List<String> parameters = extractParameters(parameterString);
 
-        //Terminal.printLine(parameters);
-        //Terminal.printLine(parameters.size());
+
         return interpretCommand(commandName, parameters);
     }
 
-    /*private static Command interpretCommand(String command) throws CommandNotFoundException {
-        switch (command) {
-            case Turn.IDENTIFIER:
-                return new Turn();
-            default: throw new CommandNotFoundException(command);
-        }
-    }*/
 
-    private static Command interpretCommand(String command, List<String> parameters) throws InputException {
+    private static Command interpretCommand(String command, List<String> parameters) throws InputException,
+            ValueOutOfRangeException {
         switch (command) {
             case Move.IDENTIFIER:
                 return new Move(parameters);
@@ -91,26 +84,16 @@ public class CommandParser {
             case ShowPlayer.IDENTIFIER:
                 return new ShowPlayer(parameters);
             case Quit.IDENTIFIER:
-                return new Quit();
+                return new Quit(parameters);
             default: throw new CommandNotFoundException(command);
         }
     }
 
 
-    private static ArrayList<String> extractParameters(final String parameterString) {
+    private static ArrayList<String> extractParameters(final String parameterString) throws FalseFormattingException {
         if (parameterString == null) return new ArrayList<>();
-        return new ArrayList<String>(Arrays.asList(parameterString.split(",")));
-
-        /*final Pattern singleParam = Pattern.compile(REGEX_SINGLE_PARAMETER);
-        final Matcher paramMatcher = singleParam.matcher(parameterString);
-
-        final ArrayList<String> parameters = new ArrayList<>();
-
-        while (paramMatcher.find()) {
-            parameters.add(paramMatcher.group());
-        }
-
-        return parameters;*/
+        if (!parameterString.matches(LIST_REGEX)) throw new FalseFormattingException(parameterString, LIST_REGEX);
+        return new ArrayList<>(Arrays.asList(parameterString.split(LIST_DIVIDER)));
     }
 
 }

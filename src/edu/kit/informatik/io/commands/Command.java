@@ -1,6 +1,5 @@
 package edu.kit.informatik.io.commands;
 
-import edu.kit.informatik.data.Game;
 import edu.kit.informatik.data.resources.exceptions.GameException;
 import edu.kit.informatik.io.Session;
 
@@ -10,24 +9,6 @@ import edu.kit.informatik.io.Session;
  * @version 1.0
  */
 public abstract class Command {
-    /**
-     * Regex that matches a identifier of an escape network
-     */
-    protected static final String REGEX_NETWORK_IDENTIFIER = "[A-Z]{1,6}";
-    /**
-     * Regex that matches a identifier of an escape section
-     */
-    protected static final String REGEX_NODE_IDENTIFIER = "([a-z]{1,6})";
-    /**
-     * Regex that matches the capacity of an escape section
-     */
-    protected static final String REGEX_WHOLE_NUMBER = "([0-9]+)";
-    /**
-     * Regex that matches the string representation of an escape section
-     */
-    protected static final String REGEX_EDGE = REGEX_NODE_IDENTIFIER  + REGEX_WHOLE_NUMBER + REGEX_NODE_IDENTIFIER;
-
-
 
     /**
      * Executes the command on given database

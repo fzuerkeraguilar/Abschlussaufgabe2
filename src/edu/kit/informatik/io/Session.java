@@ -1,30 +1,30 @@
 package edu.kit.informatik.io;
 
+
 import edu.kit.informatik.data.Game;
+import edu.kit.informatik.data.GameBoard;
 import edu.kit.informatik.data.Player;
 import edu.kit.informatik.data.fields.*;
 import edu.kit.informatik.data.playfigures.FireEngine;
 import edu.kit.informatik.data.resources.Coordinates;
 import edu.kit.informatik.data.resources.exceptions.GameException;
+import edu.kit.informatik.io.resources.exceptions.*;
 import edu.kit.informatik.io.commands.Command;
 import edu.kit.informatik.io.commands.Quit;
 import edu.kit.informatik.io.input.CommandParser;
 import edu.kit.informatik.io.input.Input;
 import edu.kit.informatik.io.output.Output;
-import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
-import edu.kit.informatik.io.resources.exceptions.FalsePositionException;
-import edu.kit.informatik.io.resources.exceptions.InputException;
 
-import java.util.ArrayList;
+
 import java.util.Arrays;
 
 /**
- *
+ * Class to model a session of fire breaker
  * @author Fabian Manuel Zürker Aguilar
  * @version 1.0
  */
 public class Session {
-    private static final String EXIT_COMMAND = "quit";
+
     private static final int START_PARAMETER_POS = 0;
 
     private static final String START_PARAMETER_SPLIT = ",";
@@ -32,20 +32,21 @@ public class Session {
     private static final int X_SIZE_POSITION = 1;
 
     private static final int FIELD_START_POSITION = 2;
-    private static final String[] PLAYER_IDENTIFIERS = {"A", "B", "C", "D"};
-    private static final int STARTING_FIRE_ENGINES = 4;
-    private static int foundFireEngines = 0;
-    private static int foundPlayers = 0;
-    private static final int PLAYER_NUM = 4;
-    private static int foundPonds = 0;
-    private static final int POND_NUM = 4;
-    private static boolean lightlyBurningFieldFound = false;
-    private static boolean stronglyBurningFieldFound = false;
-
+    /**
+     * fire breaker game of this session
+     */
     public Game game;
+
+    private int foundFireEngines = 0;
+    private int foundFireStations = 0;
+    private int foundPonds = 0;
+    private int lightlyBurningFieldFound = 0;
+    private int stronglyBurningFieldFound = 0;
+
     private final Output outputHandler = new Output();
     private final CommandParser commandParser = new CommandParser();
     private final Input inputHandler = new Input();
+    private Game gameBackUp;
     private boolean quit = false;
 
     /**
@@ -54,87 +55,89 @@ public class Session {
      */
     public Session(String[] args) {
         try {
-            //TODO
+            if (args.length != START_PARAMETER_POS + 1) throw new OnlyOneFieldException();
             String[] arguments = args[START_PARAMETER_POS].split(START_PARAMETER_SPLIT);
-
             Coordinates size = new Coordinates(arguments[Y_SIZE_POSITION], arguments[X_SIZE_POSITION]);
+            if (size.x < GameBoard.MIN_DIM.x) {
+                throw new ValueOutOfRangeException(size.x, GameBoard.MIN_DIM.x, Integer.MAX_VALUE);
+            }
+            if (size.y < GameBoard.MIN_DIM.y) {
+                throw new ValueOutOfRangeException(size.y, GameBoard.MIN_DIM.y, Integer.MAX_VALUE);
+            }
             arguments = Arrays.copyOfRange(arguments, FIELD_START_POSITION, arguments.length);
+            if (arguments.length != size.x * size.y) throw new WrongNumberOfArgumentsException(size.x * size.y);
 
-            if (arguments.length != size.x * size.y) throw new FalseFormattingException("test", "test");
             String[][] argumentField = new String[size.y][size.x];
             for (int y = 0; y < size.y; y++) {
-                if (size.x >= 0) System.arraycopy(arguments, y * size.y, argumentField[y], 0, size.x);
+                if (size.x >= 0) System.arraycopy(arguments, y * size.x, argumentField[y], 0, size.x);
             }
-
             Field[][] fields = new Field[size.y][size.x];
             for (int y = 0; y < size.y; y++) {
                 for (int x = 0; x < size.x; x++) {
-                    fields[y][x] = this.interpretFieldIdentifier(argumentField[y][x], y, x);
+                    fields[y][x] = this.interpretFieldIdentifier(argumentField[y][x], new Coordinates(y, x));
                 }
             }
-            if (foundFireEngines != STARTING_FIRE_ENGINES)
-                throw new FalseFormattingException("to many fire engines", "");
-            if (foundPlayers != PLAYER_NUM) throw new FalseFormattingException("to many players", "");
-            if (foundPonds != POND_NUM) throw new FalseFormattingException("to many ponds", "");
 
-            ArrayList<Coordinates> pondCoordinates = new ArrayList<>();
-            pondCoordinates.add(new Coordinates(0, (size.x / 2)));
-            pondCoordinates.add(new Coordinates((size.y / 2) , size.x - 1));
-            pondCoordinates.add(new Coordinates(size.y - 1, (size.x / 2) ));
-            pondCoordinates.add(new Coordinates((size.y / 2), 0 ));
-            for (Coordinates c : pondCoordinates) {
+            size = new Coordinates(size.y - 1, size.x - 1);
+            if (this.foundFireEngines != FireEngine.STARTING_NUM) {
+                throw new FireEngineNumberException(FireEngine.STARTING_NUM);
+            }
+            if (this.foundFireStations != FireStation.STARTING_NUM) {
+                throw new FireStationNumberException(FireStation.STARTING_NUM);
+            }
+            if (this.foundPonds != Pond.STARTING_NUM) throw new PondNumberException(Pond.STARTING_NUM);
+            if (this.lightlyBurningFieldFound < LightlyBurningForest.MIN_STARTING_NUM ) {
+                throw new LightlyBurningFieldNumberException(LightlyBurningForest.MIN_STARTING_NUM);
+            }
+            if (this.stronglyBurningFieldFound < StronglyBurningForest.MIN_STARTING_NUM) {
+                throw new StronglyBurningForestNumberException(StronglyBurningForest.MIN_STARTING_NUM);
+            }
+
+            for (Coordinates c : Pond.startingPos(size)) {
                 if (!fields[c.y][c.x].getIdentifier().equals(Pond.IDENTIFIER)) {
-                    throw new FalsePositionException(fields[c.y][c.x].getIdentifier());
+                    throw new FieldNotExpected(fields[c.y][c.x].getIdentifier(), c);
                 }
             }
 
-            ArrayList<Coordinates> playerNameCoordinates = new ArrayList<>();
-            playerNameCoordinates.add(new Coordinates(0, 0));
-            playerNameCoordinates.add(new Coordinates(size.y - 1, size.x - 1));
-            playerNameCoordinates.add(new Coordinates(size.y - 1, 0));
-            playerNameCoordinates.add(new Coordinates(0, size.x - 1));
-            Player[] players = new Player[PLAYER_NUM];
-            for (int i = 0; i < PLAYER_NUM; i++) {
-                if (fields[playerNameCoordinates.get(i).y][playerNameCoordinates.get(i).x]
-                        .getIdentifier().equals(PLAYER_IDENTIFIERS[i])) {
-                    players[i] = new Player(PLAYER_IDENTIFIERS[i], playerNameCoordinates.get(i));
+            Player[] players = new Player[Player.PLAYER_NUM];
+            Coordinates[] fireStationStartingPos = FireStation.getStartingPos(size);
+            for (int i = 0; i < Player.PLAYER_NUM; i++) {
+                Field fireStationLocation = fields[fireStationStartingPos[i].y][fireStationStartingPos[i].x];
+                if (fireStationLocation.getIdentifier().equals(Player.PLAYER_IDENTIFIERS[i])) {
+                    players[i] = new Player(Player.PLAYER_IDENTIFIERS[i], fireStationStartingPos[i]);
                 } else {
-                    throw new FalseFormattingException("Fire station not at specified pos", String.valueOf(i));
+                    throw new FieldNotExpected(fireStationLocation.getIdentifier(), fireStationStartingPos[i]);
                 }
             }
-
-            ArrayList<Coordinates> playerFigureCoordinates = new ArrayList<>();
-            playerFigureCoordinates.add(new Coordinates(1, 1));
-            playerFigureCoordinates.add(new Coordinates(size.y - 2, size.x - 2));
-            playerFigureCoordinates.add(new Coordinates(size.y - 2, 1));
-            playerFigureCoordinates.add(new Coordinates(1, size.x - 2));
-
-            for (int i = 0; i < PLAYER_NUM; i++) {
-                if (fields[playerFigureCoordinates.get(i).y][playerFigureCoordinates.get(i).x]
-                        .getFireEngineList().get(0).getOwner().matches(players[i].identifier)) {
-                    players[i].addFigure(fields[playerFigureCoordinates.get(i).y]
-                            [playerFigureCoordinates.get(i).x].getFireEngineList().get(0));
-                    //TODO check if FireEngine.getOwner matches PlayerNames
-                    //TODO check if FireEngine.getIndex is 0
+            Coordinates[] fireEnginePos = FireEngine.startingPos(size);
+            for (int i = 0; i < Player.PLAYER_NUM; i++) {
+                Field fireEngineLocation = fields[fireEnginePos[i].y][fireEnginePos[i].x];
+                if (fireEngineLocation.getFireEngineList().size() != 1) {
+                    throw new FireEngineExpectedException(fireEnginePos[i]);
+                }
+                FireEngine newFireEngine = fireEngineLocation.getFireEngineList().get(0);
+                if (newFireEngine.getIndex() != FireEngine.STARTING_INDEX) {
+                    throw new FireEngineIndexException(newFireEngine.identifier, FireEngine.STARTING_INDEX);
+                }
+                if (newFireEngine.getOwner().matches(players[i].identifier)) {
+                    players[i].addFireEngine(newFireEngine);
+                } else {
+                    throw new FireEngineOwnerException(players[i].identifier + FireEngine.STARTING_INDEX,
+                            fireEnginePos[i]);
                 }
             }
-
-            if (!(lightlyBurningFieldFound && stronglyBurningFieldFound)) {
-                throw new FalseFormattingException("burning Field", "dsjiodlsjd");
-            }
-
-            game = new Game(size, fields, players);
-        } catch (GameException | FalseFormattingException | FalsePositionException e) {
-            outputHandler.printError(e.getMessage());
+            this.game = new Game(size, fields, players);
+            this.gameBackUp = this.game.clone();
+        } catch (GameException | InputException e) {
             this.setQuit();
+            this.outputHandler.printError(e.getMessage());
         }
     }
 
     /**
-     *
+     * Starts the inputHandler to read and execute the users inputs
      */
     public void run() {
-        //TODO quit über Command Klasse machen
         while (!quit) {
             this.inputHandler.readInput();
             try {
@@ -147,33 +150,43 @@ public class Session {
         }
     }
 
+    /**
+     * Quits this session
+     */
     public void setQuit() {
         quit = true;
     }
 
-    private Field interpretFieldIdentifier(String identifier, int y, int x) throws FalseFormattingException {
+    /**
+     * Resets this session's game
+     */
+    public void reset() {
+        this.game = this.gameBackUp.clone();
+    }
+
+    private Field interpretFieldIdentifier(String identifier, Coordinates position) throws FalseFormattingException {
         switch (identifier) {
-            case DryForest.IDENTIFIER: return new DryForest(y, x);
-            case WetForest.IDENTIFIER: return new WetForest(y, x);
+            case DryForest.IDENTIFIER: return new DryForest(position.y, position.x);
+            case WetForest.IDENTIFIER: return new WetForest(position.y, position.x);
             case LightlyBurningForest.IDENTIFIER:
-                lightlyBurningFieldFound = true;
-                return new LightlyBurningForest(y, x);
+                lightlyBurningFieldFound++;
+                return new LightlyBurningForest(position.y, position.x);
             case StronglyBurningForest.IDENTIFIER:
-                stronglyBurningFieldFound = true;
-                return new StronglyBurningForest(y, x);
+                stronglyBurningFieldFound++;
+                return new StronglyBurningForest(position.y, position.x);
             case Pond.IDENTIFIER:
                 foundPonds++;
-                return new Pond(y, x);
+                return new Pond(position.y, position.x);
             default:
                 break;
         }
         if (identifier.matches(FireStation.IDENTIFIER_REGEX) ) {
-            foundPlayers++;
-            return new FireStation(y, x, identifier);
+            foundFireStations++;
+            return new FireStation(position.y, position.x, identifier);
         }
         if (identifier.matches(FireEngine.REGEX)) {
-            DryForest dryForest = new DryForest(y, x);
-            FireEngine fireEngine = new FireEngine(y, x, identifier);
+            DryForest dryForest = new DryForest(position.y, position.x);
+            FireEngine fireEngine = new FireEngine(position, identifier);
             dryForest.addFigure(fireEngine);
             foundFireEngines++;
             return dryForest;

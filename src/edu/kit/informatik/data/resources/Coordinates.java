@@ -1,6 +1,5 @@
 package edu.kit.informatik.data.resources;
 
-import edu.kit.informatik.data.resources.exceptions.GameBoardSizeNotOddExceptions;
 import edu.kit.informatik.data.resources.exceptions.ValueOutOfRangeException;
 
 import java.util.Objects;
@@ -12,18 +11,18 @@ import java.util.Objects;
  */
 public class Coordinates {
     /**
-     *
+     * x coordinate of coordinate pair
      */
-    public int x;
+    public final int x;
     /**
-     *
+     * y coordinate of coordinate pair
      */
-    public int y;
+    public final int y;
 
     /**
-     *
-     * @param y
-     * @param x
+     * Constructor of new 2D-coordinate
+     * @param y y value of this coordinate
+     * @param x x value of this coordinate
      */
     public Coordinates(final int y, final int x) {
         this.y = y;
@@ -32,37 +31,28 @@ public class Coordinates {
 
     /**
      *
-     * @param y
-     * @param x
-     * @throws ValueOutOfRangeException
-     * @throws GameBoardSizeNotOddExceptions
+     * @param y y value of this coordinate
+     * @param x x value of this coordinate
+     * @throws ValueOutOfRangeException - if one value is < 0
      */
-    public Coordinates(final String y, final String x) throws ValueOutOfRangeException, GameBoardSizeNotOddExceptions {
+    public Coordinates(final String y, final String x) throws ValueOutOfRangeException {
         try {
-            int temp = Integer.parseInt(y);
-            if (temp % 2 != 1) {
-                throw new GameBoardSizeNotOddExceptions(x);
-            }
-            this.y = temp;
-        } catch (NumberFormatException | GameBoardSizeNotOddExceptions e) {
-            throw new ValueOutOfRangeException(e.getMessage());
-        }
-        try {
-            int temp = Integer.parseInt(y);
-            if (temp % 2 != 1) {
-                throw new GameBoardSizeNotOddExceptions(y);
-            }
-            this.x = temp;
+            this.y = Integer.parseInt(y);
         } catch (NumberFormatException e) {
             throw new ValueOutOfRangeException(e.getMessage());
         }
-
+        try {
+            this.x = Integer.parseInt(x);
+        } catch (NumberFormatException e) {
+            throw new ValueOutOfRangeException(e.getMessage());
+        }
+        if (this.x < 0 || this.y < 0) throw new ValueOutOfRangeException(0, Integer.MAX_VALUE);
     }
 
     /**
-     *
-     * @param northBound
-     * @return
+     * Returns coordinate that is one unit north from this coordinate
+     * @param northBound northern limit of grid system
+     * @return coordinate that is one unit up from this coordinate, if boundary is not crossed, else returns this
      */
     public Coordinates north(int northBound) {
         if (this.y <= northBound) {
@@ -72,10 +62,11 @@ public class Coordinates {
     }
 
     /**
-     *
-     * @param northBound
-     * @param eastBound
-     * @return
+     * Returns coordinate that is one north and one unit east from this coordinate
+     * @param northBound northern limit of grid system
+     * @param eastBound eastern limit of grid system
+     * @return coordinate that is one north and one unit east from this coordinate, if boundary is not crossed,
+     * else returns this
      */
     public Coordinates northEast(int northBound, int eastBound) {
         if (this.y <= northBound || this.x <= eastBound) {
@@ -85,9 +76,9 @@ public class Coordinates {
     }
 
     /**
-     *
-     * @param eastBound
-     * @return
+     * Returns coordinate that is one unit east from this coordinate
+     * @param eastBound eastern limit of grid system
+     * @return coordinate that is one unit east from this coordinate if boundary is not crossed, else returns this
      */
     public Coordinates east(int eastBound) {
         if (this.x >= eastBound) {
@@ -97,10 +88,11 @@ public class Coordinates {
     }
 
     /**
-     *
-     * @param southBound
-     * @param eastBound
-     * @return
+     * Returns coordinate that is one unit south and one unit east from this coordinate
+     * @param southBound southern limit of grid system
+     * @param eastBound eastern limit of grid system
+     * @return coordinate that is one unit south and one unit east from this coordinate if boundary is not crossed,
+     * else returns this
      */
     public Coordinates southEast(int southBound, int eastBound) {
         if (this.y >= southBound  || this.x >= eastBound) {
@@ -110,9 +102,9 @@ public class Coordinates {
     }
 
     /**
-     *
-     * @param southBound
-     * @return
+     * Returns coordinate that is one unit south from this coordinate
+     * @param southBound southern limit of grid system
+     * @return coordinate that is one unit south from this coordinate if boundary is not crossed, else returns this
      */
     public Coordinates south(int southBound) {
         if (this.y >= southBound) {
@@ -122,10 +114,11 @@ public class Coordinates {
     }
 
     /**
-     *
-     * @param southBound
-     * @param westBound
-     * @return
+     * Returns coordinate that is one unit south and one unit west from this coordinate
+     * @param southBound southern limit of grid system
+     * @param westBound western limit of grid system
+     * @return coordinate that is one unit south and one unit west from this coordinate if boundary is not crossed,
+     * else returns this
      */
     public Coordinates southWest(int southBound, int westBound) {
         if (this.y >= southBound || this.x <= westBound) {
@@ -135,9 +128,9 @@ public class Coordinates {
     }
 
     /**
-     *
-     * @param westBound
-     * @return
+     * Returns coordinate that is one unit west from this coordinate
+     * @param westBound western limit of grid system
+     * @return coordinate that is one unit west from this coordinate if boundary is not crossed, else returns this
      */
     public Coordinates west(int westBound) {
         if (this.x <= westBound) {
@@ -147,10 +140,11 @@ public class Coordinates {
     }
 
     /**
-     *
-     * @param northBound
-     * @param westBound
-     * @return
+     * Returns coordinate that is one unit north and one unit west from this coordinate
+     * @param northBound northern limit of grid system
+     * @param westBound western limit of grid system
+     * @return coordinate that is one unit north and one unit west from this coordinate if boundary is not crossed,
+     * else returns this
      */
     public Coordinates northWest(int northBound, int westBound) {
         if (this.y <= northBound || this.x <= westBound) {
@@ -158,15 +152,14 @@ public class Coordinates {
         }
         return new Coordinates(this.y - 1, this.x - 1);
     }
-//TODO
 
     /**
-     *
-     * @param destination
-     * @return
+     * Method to get distance to other coordinate
+     * @param destination other 2D-coordinate
+     * @return min field crossings needed to get to this coordinate
      */
-    public double distance(Coordinates destination) {
-        return Math.hypot(Math.abs(this.x - destination.x), Math.abs(this.y - destination.y));
+    public int distance(Coordinates destination) {
+        return Math.abs(this.x - destination.x) +  Math.abs(this.y - destination.y);
     }
 
     @Override
@@ -185,5 +178,10 @@ public class Coordinates {
     @Override
     public String toString() {
         return this.y + "," + this.x;
+    }
+
+    @Override
+    public Coordinates clone() {
+        return new Coordinates(this.y, this.x);
     }
 }

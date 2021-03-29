@@ -3,17 +3,17 @@ package edu.kit.informatik.data.fields;
 
 import edu.kit.informatik.data.playfigures.FireEngine;
 import edu.kit.informatik.data.resources.Coordinates;
-import edu.kit.informatik.data.resources.exceptions.IdentifierNotFoundException;
 
 import java.util.ArrayList;
 import java.util.Objects;
 
 /**
- *
+ * abstract class to model a generic field in a fire breaker game
  * @author Fabian Manuel Zürker Aguilar
  * @version 1.0
  */
 public abstract class Field {
+
     private static final String REPRESENTATION = "x";
     private static final boolean BURNS_ALONE = false;
     private static final boolean AVAILABLE_TO_FIRE_ENGINE_DEFAULT = false;
@@ -30,24 +30,27 @@ public abstract class Field {
     /**
      * List of all fire engines on this field
      */
-    protected ArrayList<FireEngine> fireEngineList = new ArrayList<>();
+    protected final ArrayList<FireEngine> fireEngineList = new ArrayList<>();
     /**
      * flag, if this field war already burned in this round
      */
     protected boolean burned = false;
 
+
+
     /**
-     *
-     * @param y
-     * @param x
+     * Constructor for a new field
+     * @param y y coordinate of this field
+     * @param x x coordinate of this field
      */
     public Field(final int y, final int x) {
         coordinates = new Coordinates(y, x);
     }
 
+
     /**
-     *
-     * @return
+     * Checks if this field is available to fire engine
+     * @return if this field is available to fire engine
      */
     public boolean isAvailableToFireEngine() {
         return AVAILABLE_TO_FIRE_ENGINE_DEFAULT;
@@ -55,7 +58,7 @@ public abstract class Field {
 
     /**
      *
-     * @return
+     * @return if this field is passable to fire engine
      */
     public boolean isPassableToFireEngine() {
         return PASSABLE_TO_FIRE_ENGINE_DEFAULT;
@@ -63,7 +66,7 @@ public abstract class Field {
 
     /**
      *
-     * @return
+     * @return if this field is burnable
      */
     public boolean isBurnable() {
         return !burned && BURNABLE_DEFAULT;
@@ -71,18 +74,23 @@ public abstract class Field {
 
     /**
      *
-     * @return
+     * @return if this field can burn other fields
      */
     public boolean burnsOther() {
         return BURNS_OTHER_DEFAULT;
     }
 
+    /**
+     *
+     * @return if this field is burning
+     */
     public boolean burns() {
         return BURNS_DEFAULT;
     }
+
     /**
      *
-     * @return
+     * @return if this field can be extinguished
      */
     public boolean isExtinguishable() {
         return EXTINGUISHABLE_DEFAULT;
@@ -90,7 +98,7 @@ public abstract class Field {
 
     /**
      *
-     * @return
+     * @return if field burns alone
      */
     public boolean burnsAlone() {
         return !burned && BURNS_ALONE;
@@ -98,50 +106,29 @@ public abstract class Field {
 
     /**
      *
-     * @return
+     * @return if field contains water
      */
     public boolean containsWater() {
         return CONTAINS_WATER;
     }
 
     /**
-     *
-     * @return
+     * Resets the flag that this field was burned in this round
      */
     public void resetBurned() {
         this.burned = false;
     }
 
     /**
-     *
-     * @return
-     */
-    abstract public Field burn();
-
-    /**
-     *
-     * @return
-     */
-    abstract public String getIdentifier();
-
-    /**
-     *
-     * @return
-     */
-    abstract public Field extinguish();
-
-    /**
-     *
-     * @return
+     * @return a string representation of this field
      */
     public String toString() {
         return REPRESENTATION;
     }
 
     /**
-     *
-     * @param figure
-     * @return
+     * Adds a fire engine to this field
+     * @param figure fire engine to be added
      */
     public void addFigure(final FireEngine figure) {
         this.fireEngineList.add(figure);
@@ -149,44 +136,30 @@ public abstract class Field {
 
 
     /**
-     *
-     * @param identifier
-     * @return
+     * Removes all fire engines on this field if their identifier matches the given identifier
+     * @param identifier identifier of the fire engine to be removed
      */
     public void removeFigure(String identifier) {
-        fireEngineList.removeIf(f -> f.identifier.equals(identifier));
+        this.fireEngineList.removeIf(fireEngine -> fireEngine.identifier.equals(identifier));
     }
-    /**
-     *
-     * @return
-     */
 
+    /**
+     * @return a list of all fire engines on this field
+     */
     public ArrayList<FireEngine> getFireEngineList() {
         return fireEngineList;
     }
 
-    /**
-     *
-     * @param identifier
-     * @return
-     * @throws IdentifierNotFoundException
-     */
-    public FireEngine getFigure(String identifier) throws IdentifierNotFoundException {
-        for (FireEngine f : fireEngineList) {
-            if (f.identifier.equals(identifier)) {
-                return f;
-            }
-        }
-        throw new IdentifierNotFoundException(identifier);
-    }
 
     /**
-     *
-     * @return
+     * Returns a more detailed representation of this field and the fire engines on it
+     * @return a more detailed representation of this field and the fire engines on it
      */
     public String showInformation() {
         return this.toString();
     }
+
+
 
     @Override
     public boolean equals(Object o) {
@@ -199,5 +172,42 @@ public abstract class Field {
     @Override
     public int hashCode() {
         return Objects.hash(coordinates);
+    }
+
+    /**
+     * Burns this field
+     * @return a burned version of this field
+     */
+    public Field burn() {
+        return this;
+    }
+
+    /**
+     * Getter for identifier of this field
+     * @return the identifier of this field
+     */
+    public String getIdentifier() {
+        return this.toString();
+    }
+
+    /**
+     * Extinguishes this field
+     * @return an extinguished version of this field
+     */
+    public Field extinguish() {
+        return this;
+    }
+
+    /**
+     * Getter for the burned flag of a field
+     * @return if this field was burned during this round
+     */
+    public boolean isBurned() {
+        return this.burned;
+    }
+
+    @Override
+    public Field clone() {
+        return null;
     }
 }

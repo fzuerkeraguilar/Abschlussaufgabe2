@@ -2,8 +2,10 @@ package edu.kit.informatik.data.fields;
 
 import edu.kit.informatik.data.playfigures.FireEngine;
 
+import java.util.Collections;
+
 /**
- *
+ * abstract class to model a generic forest in fire breaker game
  * @author Fabian Manuel Zürker Aguilar
  * @version 1.0
  */
@@ -14,13 +16,14 @@ public abstract class Forest extends Field {
     private static final boolean EXTINGUISHABLE_OVERRIDE = true;
 
     /**
-     *
-     * @param y
-     * @param x
+     * Constructor of a forest field
+     * @param y y coordinate of this field
+     * @param x x coordinate of this field
      */
     public Forest(int y, int x) {
         super(y, x);
     }
+
 
     @Override
     public boolean isPassableToFireEngine() {
@@ -47,7 +50,8 @@ public abstract class Forest extends Field {
         StringBuilder builder = new StringBuilder();
         builder.append(this.getIdentifier());
         builder.append(",");
-        for (FireEngine f : fireEngineList) {
+        Collections.sort(this.fireEngineList);
+        for (FireEngine f : this.fireEngineList) {
             if (!f.destroyed) {
                 builder.append(f.identifier);
                 builder.append(",");

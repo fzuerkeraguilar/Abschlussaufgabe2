@@ -10,6 +10,7 @@ public class CommandNotFoundException extends InputException {
     private static final String COMMAND_NOT_FOUND = "\"%s\" is not a valid command";
 
     /**
+     * Exception to be thrown, when given command does not match the identifiers of any existing command
      * Formats given string into a meaningful error message
      * @param command string that could not be interpreted as a command
      */

@@ -2,12 +2,12 @@ package edu.kit.informatik.io.commands;
 
 import edu.kit.informatik.data.resources.exceptions.GameException;
 import edu.kit.informatik.io.Session;
-import edu.kit.informatik.io.resources.exceptions.FalseFormattingException;
+import edu.kit.informatik.io.resources.exceptions.WrongNumberOfArgumentsException;
 
 import java.util.List;
 
 /**
- *
+ * Class to manage the "refill" command
  * @author Fabian Manuel Zürker Aguilar
  * @version 1.0
  */
@@ -25,12 +25,13 @@ public class Refill extends Command {
 
 
     /**
-     *
+     * Constructor of refill command
+     * checks inputs
      * @param args parameters of this command
-     * @throws FalseFormattingException
+     * @throws WrongNumberOfArgumentsException - if unexpected amount of parameters are given
      */
-    public Refill(List<String> args) throws FalseFormattingException {
-        if (args.size() != PARAMETER_NUM ) throw new FalseFormattingException("NOT THE RIGHT AMOUNT OF PARAMETERS", "");
+    public Refill(List<String> args) throws WrongNumberOfArgumentsException {
+        if (args.size() != PARAMETER_NUM ) throw new WrongNumberOfArgumentsException(PARAMETER_NUM);
         this.fireEngineIdentifier = args.get(ID_POS);
     }
 
